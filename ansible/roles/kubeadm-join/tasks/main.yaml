@@ -6,7 +6,7 @@
 
 - name: Get kubeadm join command with tokens from local file
   ansible.builtin.set_fact:
-    kubeadm_join_command: "{{ lookup('file', '/home/p/fcos-k8s/kubeadm-join-command.sh') }}"
+    kubeadm_join_command: "{{ lookup('file', './kubeadm-join-command.sh') }}"
   when: inventory_hostname in groups.workers
 
 - name: Print kubeadm join command with tokens
@@ -24,14 +24,6 @@
   ansible.builtin.debug:
     var: kubeadm_join_output.stdout_lines
   when: inventory_hostname in groups.workers
-
-- name: Reboot all nodes
-  ansible.builtin.reboot:
-    post_reboot_delay: 10
-    reboot_timeout: 600
-
-- name: Test connection with ping
-  ansible.builtin.ping:
 
 - name: Wait until port 6443 is listening on controlplane
   ansible.builtin.wait_for:
@@ -55,7 +47,7 @@
   become: no
   delegate_to: 127.0.0.1
   ansible.builtin.command:
-    cmd: /usr/bin/kubectl get no -owide
+    cmd: kubectl get no -owide
   register: kubectl_getno_output
   when: inventory_hostname in groups.controlplane
 
@@ -69,7 +61,7 @@
   become: no
   delegate_to: 127.0.0.1
   ansible.builtin.command:
-    cmd: /usr/bin/kubectl get pod --all-namespaces -owide
+    cmd: kubectl get pod --all-namespaces -owide
   register: get_pods
   when: inventory_hostname in groups.controlplane
 

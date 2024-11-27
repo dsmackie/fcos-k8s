@@ -10,20 +10,12 @@
   become: no
   delegate_to: 127.0.0.1
   ansible.builtin.command:
-    cmd: /usr/bin/kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+    cmd: kubectl apply -f https://github.com/flannel-io/flannel/releases/latest/download/kube-flannel.yml
   register: flannel_deploy_output
 
 - name: Print Flannel deploy output
   ansible.builtin.debug:
     var: flannel_deploy_output.stdout_lines
-
-- name: Reboot master node
-  ansible.builtin.reboot:
-    post_reboot_delay: 10
-    reboot_timeout: 600
-
-- name: Test connection to master node
-  ansible.builtin.ping:
 
 - name: Check Flannel Pod
   remote_user: p

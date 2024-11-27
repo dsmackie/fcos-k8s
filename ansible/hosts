@@ -3,5 +3,3 @@ node1.k8s.local
 
 [workers]
 node2.k8s.local
-node3.k8s.local
-node4.k8s.local

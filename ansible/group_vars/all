@@ -4,7 +4,9 @@
 
 gather_facts: true
 
-k8s_version: 1.25.4
-crictl_version: v1.25.0
-crio_version: 1.25.1
-crio_repo_version: 1.25
+k8s_version: 1.31.3
+k8s_repo_version: 1.31
+crictl_version: 1.31.1
+crio_version: 1.31.2
+crio_repo_version: 1.31
+cni_plugins_version: 1.6.0

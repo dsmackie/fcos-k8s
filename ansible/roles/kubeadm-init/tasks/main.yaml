@@ -6,7 +6,7 @@
 
 - name: Copy clusterconfig.yaml
   ansible.builtin.copy:
-    src: /home/p/fcos-k8s/ansible/clusterconfig.yaml
+    src: ./clusterconfig.yaml
     dest: /root/clusterconfig.yaml
     owner: root
     group: root
@@ -33,55 +33,55 @@
   ansible.builtin.debug:
     var: kubeadm_join_command
 
-- name: Create /home/p/fcos-k8s/kubeadm-join-command.sh file on ansible node
+- name: Create ./kubeadm-join-command.sh file on ansible node
   remote_user: p
   become: no
   delegate_to: 127.0.0.1
   ansible.builtin.copy:
-    dest: /home/p/fcos-k8s/kubeadm-join-command.sh
+    dest: ./kubeadm-join-command.sh
     mode: '0600'
     content: "{{ kubeadm_join_command }}"
 
-- name: Create /home/p/.kube directory on ansible node
+- name: Create ~/.kube directory on ansible node
   remote_user: p
   become: no
   delegate_to: 127.0.0.1
   ansible.builtin.file:
-    path: /home/p/.kube
+    path: ~/.kube
     state: directory
     mode: '0700'
 
-- name: Copy /etc/kubernetes/admin.conf from node1 to /home/p/.kube locally
+- name: Copy /etc/kubernetes/admin.conf from node1 to ~/.kube locally
   ansible.builtin.fetch:
     src: /etc/kubernetes/admin.conf
-    dest: /home/p/.kube
+    dest: ~/.kube
 
-- name: Move /home/p/.kube/node1.k8s.local/etc/kubernetes/admin.conf to /home/p/.kube/config on ansible node
+- name: Move ~/.kube/node1.k8s.local/etc/kubernetes/admin.conf to ~/.kube/config on ansible node
   remote_user: p
   become: no
   delegate_to: 127.0.0.1
   ansible.builtin.command:
-    cmd: mv /home/p/.kube/node1.k8s.local/etc/kubernetes/admin.conf /home/p/.kube/config
+    cmd: mv ~/.kube/node1.k8s.local/etc/kubernetes/admin.conf ~/.kube/config
 
-- name: Do chmod 700 /home/p/.kube/config on ansible node
+- name: Do chmod 700 ~/.kube/config on ansible node
   remote_user: p
   become: no
   delegate_to: 127.0.0.1
   ansible.builtin.command:
-    cmd: chmod 700 /home/p/.kube/config
+    cmd: chmod 700 ~/.kube/config
 
 - name: Get ~/.kube/config from local file
   ansible.builtin.set_fact:
-    kube_config: "{{ lookup('file', '/home/p/.kube/config') }}"
+    kube_config: "{{ lookup('file', '~/.kube/config') }}"
 
 - name: Print ~/.kube/config from local file
   ansible.builtin.debug:
     var: kube_config
 
-- name: Delete with rm -rf /home/p/.kube/node1.k8s.local on ansible node
+- name: Delete with rm -rf ~/.kube/node1.k8s.local on ansible node
   remote_user: p
   become: no
   delegate_to: 127.0.0.1
   ansible.builtin.command:
-    cmd: rm -rf /home/p/.kube/node1.k8s.local
+    cmd: rm -rf ~/.kube/node1.k8s.local
 

@@ -21,21 +21,26 @@
     content: |
       [kubernetes]
       name=Kubernetes
-      baseurl=https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64
+      baseurl=https://pkgs.k8s.io/core:/stable:/v{{ k8s_repo_version }}/rpm/
       enabled=1
       gpgcheck=1
-      gpgkey=https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+      gpgkey=https://pkgs.k8s.io/core:/stable:/v{{ k8s_repo_version }}/rpm/repodata/repomd.xml.key
 
 - name: Download the libcontainers repo file
   ansible.builtin.get_url:
     url: https://download.opensuse.org/repositories/devel:kubic:libcontainers:stable/CentOS_7/devel:kubic:libcontainers:stable.repo
     dest: /etc/yum.repos.d/devel:kubic:libcontainers:stable.repo
 
-- name: Download cri-o repo file
-  ansible.builtin.get_url:
-    url: "https://download.opensuse.org/repositories/devel:kubic:libcontainers:stable:cri-o:{{ crio_repo_version }}/CentOS_7/devel:kubic:libcontainers:stable:cri-o:{{ crio_repo_version }}.repo"
-    dest: "/etc/yum.repos.d/devel:kubic:libcontainers:stable:cri-o:{{ crio_repo_version }}.repo"
-
+- name: Create /etc/yum.repos.d/cri-o.repo
+  copy:
+    dest: /etc/yum.repos.d/cri-o.repo
+    content: |
+      [cri-o]
+      name=CRI-O
+      baseurl=https://pkgs.k8s.io/addons:/cri-o:/stable:/v{{ crio_repo_version }}/rpm/
+      enabled=1
+      gpgcheck=1
+      gpgkey=https://pkgs.k8s.io/addons:/cri-o:/stable:/v{{ crio_repo_version }}/rpm/repodata/repomd.xml.key
 
 # The following is equivalent to
 #   sudo systemctl enable cri-o
@@ -66,18 +71,29 @@
 
 - name: Download cri-tools from GitHub
   ansible.builtin.get_url:
-    url: "https://github.com/kubernetes-sigs/cri-tools/releases/download/{{ crictl_version }}/crictl-{{ crictl_version }}-Linux-amd64.tar.gz"
-    dest: "/root/crictl-{{ crictl_version }}-Linux-amd64.tar.gz"
+    url: "https://github.com/kubernetes-sigs/cri-tools/releases/download/v{{ crictl_version }}/crictl-v{{ crictl_version }}-linux-amd64.tar.gz"
+    dest: "/root/crictl-v{{ crictl_version }}-linux-amd64.tar.gz"
 
-- name: Extract crictl-{{ crictl_version }}-Linux-amd64.tar.gz to /usr/local/bin
+- name: Extract crictl-v{{ crictl_version }}-linux-amd64.tar.gz to /usr/local/bin
   ansible.builtin.unarchive:
-    src: "/root/crictl-{{ crictl_version }}-Linux-amd64.tar.gz"
+    src: "/root/crictl-v{{ crictl_version }}-linux-amd64.tar.gz"
     dest: /usr/local/bin
     remote_src: true
+    
+- name: Create CNI binary directory
+  file:
+    path: /opt/cni/bin
+    state: directory
+    
+- name: Download/unarchive cni plugins
+  ansible.builtin.unarchive:
+    src: https://github.com/containernetworking/plugins/releases/download/v{{ cni_plugins_version }}/cni-plugins-linux-amd64-v{{ cni_plugins_version }}.tgz
+    dest: /opt/cni/bin
+    remote_src: yes
 
-- name: Delete crictl-{{ crictl_version }}-Linux-amd64.tar.gz
+- name: Delete crictl-v{{ crictl_version }}-linux-amd64.tar.gz
   ansible.builtin.file:
-    path: "/root/crictl-{{ crictl_version }}-Linux-amd64.tar.gz"
+    path: "/root/crictl-v{{ crictl_version }}-linux-amd64.tar.gz"
     state: absent
 
 - name: Execute 'rpm-ostree refresh-md'
@@ -89,7 +105,8 @@
     var: rpm_ostree_output.stdout_lines
 
 - name: Install the kubelet, kubeadm, cubectl and cri-o binaries
-  ansible.builtin.raw: "rpm-ostree install kubelet-{{ k8s_version }} kubeadm-{{ k8s_version }} kubectl-{{ k8s_version  }} cri-o-{{ crio_version  }}"
+  community.general.rpm_ostree_pkg:
+    name: ["kubelet-{{ k8s_version }}", "kubeadm-{{ k8s_version }}", "kubectl-{{ k8s_version }}", "cri-o-{{ crio_version }}"]
   register: rpm_ostree_output
 
 - name: Print rpm-ostree output
